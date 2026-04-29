@@ -1,0 +1,115 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Maxi (Wiescher Design) — place licensed webfonts in public/fonts/ as:
+   Maxi-Regular.woff2, Maxi-DemiBold.woff2 (convert from purchase if needed). */
+@font-face {
+  font-family: "Maxi";
+  src: url("/fonts/Maxi-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Maxi";
+  src: url("/fonts/Maxi-DemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer utilities {
+  /* Finance / editorial titles (blog) */
+  .font-blog-serif {
+    font-family: "Lora", ui-serif, Georgia, "Times New Roman", serif;
+  }
+  .font-blog-sans {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+  .font-maxi {
+    font-family: "Maxi", "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@keyframes mozno-why-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.mozno-why-float {
+  animation: mozno-why-float 5s ease-in-out infinite;
+}
+
+@keyframes partner-logo-marquee {
+  0% {
+    transform: translateX(6vw);
+  }
+  100% {
+    transform: translateX(calc(-50% + 6vw));
+  }
+}
+
+.partner-logo-marquee-track {
+  width: max-content;
+  animation: partner-logo-marquee linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mozno-why-float {
+    animation: none;
+  }
+
+  .partner-logo-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    row-gap: 1rem;
+  }
+}
+
+/* Add to your global styles */
+.react-select__control {
+  min-height: 44px !important;
+}
+
+.react-select__value-container {
+  padding-left: 36px !important;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 320px) {
+  .react-select__control {
+    min-height: 40px !important;
+  }
+  
+  .react-select__value-container {
+    padding-left: 32px !important;
+  }
+}
+
+/* Prevent zoom on iOS inputs */
+@media (max-width: 480px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
