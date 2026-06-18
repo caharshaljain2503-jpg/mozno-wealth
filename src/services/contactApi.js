@@ -21,13 +21,13 @@ export const submitContactForm = async (formData) => {
   return response;
 };
 
-/** Math captcha challenge for Financial Health / Risk Profiling pre-form */
+/** Math captcha challenge for legacy Financial Health / Risk Profiling pre-form */
 export const fetchAssessmentChallenge = async () => {
   return apiClient.get("/contact/assessment-challenge");
 };
 
 /**
- * Same lead pipeline as Contact Us (shows in Admin → Leads); uses simple math captcha.
+ * Same lead pipeline as Contact Us (shows in Admin → Leads); uses Google reCAPTCHA.
  */
 export const submitAssessmentLead = async ({
   name,
@@ -35,7 +35,7 @@ export const submitAssessmentLead = async ({
   phone,
   message,
   service,
-  captcha,
+  recaptchaToken,
 }) => {
   const payload = {
     fullName: name.trim(),
@@ -43,13 +43,7 @@ export const submitAssessmentLead = async ({
     phone: phone.trim(),
     message: message.trim(),
     service,
-    assessmentCaptcha: {
-      n1: captcha.n1,
-      n2: captcha.n2,
-      answer: captcha.answer,
-      exp: captcha.exp,
-      sig: captcha.sig,
-    },
+    recaptchaToken,
   };
   return apiClient.post("/contact", payload);
 };

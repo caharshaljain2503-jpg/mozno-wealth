@@ -1,6 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { User, AtSign, Phone, MessageSquare, Loader2, RefreshCw, Send } from "lucide-react";
-import { fetchAssessmentChallenge, submitAssessmentLead } from "../../services/contactApi";
+import React, { useRef, useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
+import { User, AtSign, Phone, MessageSquare, Loader2, Send } from "lucide-react";
+import { submitAssessmentLead } from "../../services/contactApi";
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const SERVICE_BY_KIND = {
   "financial-health": "financial-health-questionnaire",
@@ -8,42 +11,22 @@ const SERVICE_BY_KIND = {
 };
 
 export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) {
+  const recaptchaRef = useRef(null);
+  const recaptchaSize =
+    typeof window !== "undefined" && window.innerWidth < 380 ? "compact" : "normal";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
-  const [captchaInput, setCaptchaInput] = useState("");
-  const [challenge, setChallenge] = useState(null);
-  const [loadingChallenge, setLoadingChallenge] = useState(true);
-  const [challengeError, setChallengeError] = useState("");
+  const [recaptchaToken, setRecaptchaToken] = useState("");
+  const [recaptchaError, setRecaptchaError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const loadChallenge = useCallback(async () => {
-    setLoadingChallenge(true);
-    setChallengeError("");
-    setCaptchaInput("");
-    try {
-      const data = await fetchAssessmentChallenge();
-      if (!data?.success || data.n1 == null || data.n2 == null || !data.sig || !data.exp) {
-        throw new Error("Invalid challenge");
-      }
-      setChallenge({ n1: data.n1, n2: data.n2, exp: data.exp, sig: data.sig });
-    } catch (e) {
-      setChallenge(null);
-      setChallengeError(e?.response?.data?.message || e?.message || "Could not load verification.");
-    } finally {
-      setLoadingChallenge(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadChallenge();
-  }, [loadChallenge]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError("");
+    setRecaptchaError("");
 
     const nameT = name.trim();
     const emailT = email.trim();
@@ -63,12 +46,12 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
       setSubmitError("Enter a valid phone number (10–15 digits).");
       return;
     }
-    if (!challenge) {
-      setSubmitError("Verification not loaded. Refresh and try again.");
+    if (!RECAPTCHA_SITE_KEY) {
+      setSubmitError("Google CAPTCHA site key is missing.");
       return;
     }
-    if (captchaInput.trim() === "") {
-      setSubmitError("Enter the answer to the math question.");
+    if (!recaptchaToken) {
+      setSubmitError("Please complete the Google CAPTCHA.");
       return;
     }
 
@@ -86,13 +69,7 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
         phone: phoneT,
         message: msgT || "",
         service,
-        captcha: {
-          n1: challenge.n1,
-          n2: challenge.n2,
-          answer: captchaInput.trim(),
-          exp: challenge.exp,
-          sig: challenge.sig,
-        },
+        recaptchaToken,
       });
       onSubmitSuccess?.({
         fullName: nameT,
@@ -105,7 +82,8 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
         err?.message ||
         "Something went wrong. Please try again.";
       setSubmitError(msg);
-      loadChallenge();
+      setRecaptchaToken("");
+      recaptchaRef.current?.reset();
     } finally {
       setSubmitting(false);
     }
@@ -204,47 +182,33 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-3">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-xs font-medium text-gray-700">Verification</span>
-            <button
-              type="button"
-              onClick={loadChallenge}
-              disabled={loadingChallenge || busy}
-              className="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium hover:underline disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingChallenge ? "animate-spin" : ""}`} />
-              New question
-            </button>
-          </div>
-          {loadingChallenge && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Loading…
+          <span className="block text-xs font-medium text-gray-700 mb-2">Verification</span>
+          {!RECAPTCHA_SITE_KEY ? (
+            <p className="text-sm text-red-600">Google CAPTCHA site key is missing.</p>
+          ) : (
+            <div className="min-h-[78px] overflow-hidden">
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={RECAPTCHA_SITE_KEY}
+                size={recaptchaSize}
+                onChange={(token) => {
+                  setRecaptchaToken(token || "");
+                  setRecaptchaError("");
+                  setSubmitError("");
+                }}
+                onExpired={() => {
+                  setRecaptchaToken("");
+                  setRecaptchaError("CAPTCHA expired. Please verify again.");
+                }}
+                onErrored={() => {
+                  setRecaptchaToken("");
+                  setRecaptchaError("CAPTCHA could not load. Please refresh the page.");
+                }}
+              />
             </div>
           )}
-          {!loadingChallenge && challengeError && (
-            <p className="text-sm text-red-600">{challengeError}</p>
-          )}
-          {!loadingChallenge && challenge && !challengeError && (
-            <>
-              <p className="text-sm text-gray-800 mb-2">
-                What is{" "}
-                <span className="font-semibold tabular-nums">
-                  {challenge.n1} + {challenge.n2}
-                </span>
-                ?
-              </p>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={captchaInput}
-                onChange={(e) => setCaptchaInput(e.target.value.replace(/\D/g, ""))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
-                placeholder="Your answer"
-                disabled={busy}
-                autoComplete="off"
-              />
-            </>
+          {recaptchaError && (
+            <p className="text-sm text-red-600 mt-2">{recaptchaError}</p>
           )}
         </div>
 
@@ -256,7 +220,7 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
 
         <button
           type="submit"
-          disabled={busy || loadingChallenge || !challenge || !!challengeError}
+          disabled={busy || !RECAPTCHA_SITE_KEY || !recaptchaToken}
           className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {submitting ? (
