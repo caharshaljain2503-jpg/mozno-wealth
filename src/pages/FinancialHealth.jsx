@@ -19,6 +19,7 @@ import {
   FINANCIAL_HEALTH_MAX_SCORE,
   getFinancialHealthCategory,
 } from "../data/financialHealthQuestions";
+import { submitAssessmentResultEmail } from "../services/assessmentResultEmail";
 
 const FinancialHealthPage = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -26,6 +27,9 @@ const FinancialHealthPage = () => {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [leadDetails, setLeadDetails] = useState(null);
+  const [emailStatus, setEmailStatus] = useState("idle");
+  const [emailMessage, setEmailMessage] = useState("");
 
   const questions = FINANCIAL_HEALTH_QUESTIONS;
   const lastIndex = Math.max(0, questions.length - 1);
@@ -41,16 +45,49 @@ const FinancialHealthPage = () => {
   const handleBinaryAnswer = (score) => {
     const active = questions[safeIndex];
     if (!active) return;
-    const updated = { ...answers, [active.id]: score };
+    const selectedLabel = score === active.yesScore ? "Yes" : "No";
+    const updated = {
+      ...answers,
+      [active.id]: {
+        question: active.prompt,
+        answer: selectedLabel,
+        score,
+      },
+    };
     setAnswers(updated);
     if (safeIndex < lastIndex) {
       setTimeout(() => setCurrent(safeIndex + 1), 220);
     } else {
-      const total = Object.values(updated).reduce((a, b) => a + Number(b), 0);
+      const total = Object.values(updated).reduce((a, b) => a + Number(b.score), 0);
+      const category = getFinancialHealthCategory(total);
       setResult({
-        category: getFinancialHealthCategory(total),
+        category,
         totalScore: total,
       });
+      setEmailStatus("sending");
+      setEmailMessage("Sending assessment result email...");
+      submitAssessmentResultEmail({
+        assessmentKind: "financial-health",
+        fullName: leadDetails?.fullName,
+        email: leadDetails?.email,
+        phone: leadDetails?.phone,
+        totalScore: total,
+        profileLabel: category.label,
+        answers: updated,
+      })
+        .then(() => {
+          setEmailStatus("sent");
+          setEmailMessage("Assessment result email sent to the client.");
+        })
+        .catch((err) => {
+          console.error("Failed to submit financial health result:", err);
+          setEmailStatus("failed");
+          setEmailMessage(
+            err?.response?.data?.message ||
+              err?.message ||
+              "Assessment result email could not be sent.",
+          );
+        });
     }
   };
 
@@ -58,6 +95,9 @@ const FinancialHealthPage = () => {
     setAnswers({});
     setCurrent(0);
     setResult(null);
+    setLeadDetails(null);
+    setEmailStatus("idle");
+    setEmailMessage("");
     setPhase("welcome");
     setContactModalOpen(false);
   };
@@ -89,6 +129,19 @@ const FinancialHealthPage = () => {
             <p className="text-gray-800 leading-relaxed text-sm sm:text-base">{c.desc}</p>
           </div>
           <div className="px-6 sm:px-8 pb-6">
+            {emailStatus !== "idle" && (
+              <p
+                className={`mb-4 rounded-xl border px-4 py-3 text-xs font-medium ${
+                  emailStatus === "failed"
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : emailStatus === "sent"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-amber-200 bg-amber-50 text-amber-700"
+                }`}
+              >
+                {emailMessage}
+              </p>
+            )}
             <p className="text-xs text-gray-500 leading-relaxed">
               <strong>Disclaimer:</strong> This assessment is indicative and based on your responses
               only. It is not financial advice. Please speak with a qualified advisor at Mozno Wealth
@@ -328,11 +381,14 @@ const FinancialHealthPage = () => {
       open={contactModalOpen}
       onClose={() => setContactModalOpen(false)}
       assessmentKind="financial-health"
-      onSubmitSuccess={() => {
+      onSubmitSuccess={(details) => {
+        setLeadDetails(details || null);
         setPhase("quiz");
         setCurrent(0);
         setAnswers({});
         setResult(null);
+        setEmailStatus("idle");
+        setEmailMessage("");
       }}
     />
     </>

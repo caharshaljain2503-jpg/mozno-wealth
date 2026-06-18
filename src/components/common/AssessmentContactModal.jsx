@@ -13,8 +13,8 @@ export default function AssessmentContactModal({
   assessmentKind,
   onSubmitSuccess,
 }) {
-  const handleSuccess = useCallback(() => {
-    onSubmitSuccess?.();
+  const handleSuccess = useCallback((leadDetails) => {
+    onSubmitSuccess?.(leadDetails);
     onClose?.();
   }, [onSubmitSuccess, onClose]);
 

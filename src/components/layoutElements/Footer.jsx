@@ -120,7 +120,7 @@ const Footer = () => {
               </a>
               
               <a 
-                href="https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47" 
+                href="https://maps.app.goo.gl/STjHCGiRPECf3hJR6?g_st=ac" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 sm:gap-3 text-gray-300 hover:text-amber-400 transition-colors duration-300 group"

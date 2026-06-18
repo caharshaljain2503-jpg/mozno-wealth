@@ -53,3 +53,7 @@ export const submitAssessmentLead = async ({
   };
   return apiClient.post("/contact", payload);
 };
+
+export const submitAssessmentResult = async (payload) => {
+  return apiClient.post("/assessment-result", payload);
+};

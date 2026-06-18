@@ -17,11 +17,11 @@ export const blogKeys = {
 
 
 export const useBlogs = (params = {}, options = {}) => {
-  const { page = 1, limit = 10 } = params;
+  const { page = 1, limit = 10, category, tag, search } = params;
 
   return useQuery({
-    queryKey: blogKeys.list({ page, limit }),
-    queryFn: () => blogApi.getAll({ page, limit }),
+    queryKey: blogKeys.list({ page, limit, category, tag, search }),
+    queryFn: () => blogApi.getAll({ page, limit, category, tag, search }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     ...options,
@@ -30,11 +30,12 @@ export const useBlogs = (params = {}, options = {}) => {
 
 
 export const useInfiniteBlogs = (params = {}, options = {}) => {
-  const { limit = 10 } = params;
+  const { limit = 10, category, tag, search } = params;
 
   return useInfiniteQuery({
-    queryKey: blogKeys.list({ infinite: true, limit }),
-    queryFn: ({ pageParam = 1 }) => blogApi.getAll({ page: pageParam, limit }),
+    queryKey: blogKeys.list({ infinite: true, limit, category, tag, search }),
+    queryFn: ({ pageParam = 1 }) =>
+      blogApi.getAll({ page: pageParam, limit, category, tag, search }),
     getNextPageParam: (lastPage) => {
       if (lastPage.pagination?.hasNextPage) {
         return lastPage.pagination.currentPage + 1;

@@ -14,6 +14,7 @@ import {
   getRiskProfileFromTotal,
 } from "../data/riskProfileQuestions";
 import AssessmentContactModal from "../components/common/AssessmentContactModal";
+import { submitAssessmentResultEmail } from "../services/assessmentResultEmail";
 
 const RiskProfilingPage = () => {
   const questions = Array.isArray(RISK_QUESTIONS) ? RISK_QUESTIONS : [];
@@ -23,6 +24,9 @@ const RiskProfilingPage = () => {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [leadDetails, setLeadDetails] = useState(null);
+  const [emailStatus, setEmailStatus] = useState("idle");
+  const [emailMessage, setEmailMessage] = useState("");
 
   const safeIndex = Math.max(0, Math.min(current, lastIndex));
   const q = questions[safeIndex];
@@ -33,22 +37,55 @@ const RiskProfilingPage = () => {
     }
   }, [current, lastIndex, questions.length]);
 
-  const handleSelect = (score) => {
+  const handleSelect = (option) => {
     const active = questions[safeIndex];
     if (!active) return;
 
-    const updated = { ...answers, [active.id]: score };
+    const updated = {
+      ...answers,
+      [active.id]: {
+        section: active.section,
+        question: active.question,
+        answer: option.label,
+        score: option.score,
+      },
+    };
     setAnswers(updated);
 
     if (safeIndex < lastIndex) {
       const next = safeIndex + 1;
       setTimeout(() => setCurrent(next), 250);
     } else {
-      const total = Object.values(updated).reduce((a, b) => a + b, 0);
+      const total = Object.values(updated).reduce((a, b) => a + Number(b.score), 0);
+      const profile = getRiskProfileFromTotal(total);
       setResult({
-        profile: getRiskProfileFromTotal(total),
+        profile,
         totalScore: total,
       });
+      setEmailStatus("sending");
+      setEmailMessage("Sending assessment result email...");
+      submitAssessmentResultEmail({
+        assessmentKind: "risk-profiling",
+        fullName: leadDetails?.fullName,
+        email: leadDetails?.email,
+        phone: leadDetails?.phone,
+        totalScore: total,
+        profileLabel: profile.type,
+        answers: updated,
+      })
+        .then(() => {
+          setEmailStatus("sent");
+          setEmailMessage("Assessment result email sent to the client.");
+        })
+        .catch((err) => {
+          console.error("Failed to submit risk profiling result:", err);
+          setEmailStatus("failed");
+          setEmailMessage(
+            err?.response?.data?.message ||
+              err?.message ||
+              "Assessment result email could not be sent.",
+          );
+        });
     }
   };
 
@@ -56,6 +93,9 @@ const RiskProfilingPage = () => {
     setAnswers({});
     setCurrent(0);
     setResult(null);
+    setLeadDetails(null);
+    setEmailStatus("idle");
+    setEmailMessage("");
     setPhase("welcome");
     setContactModalOpen(false);
   };
@@ -113,6 +153,20 @@ const RiskProfilingPage = () => {
           </div>
 
           <div style={styles.section}>
+            {emailStatus !== "idle" && (
+              <p
+                style={{
+                  ...styles.emailStatus,
+                  ...(emailStatus === "failed"
+                    ? styles.emailStatusFailed
+                    : emailStatus === "sent"
+                      ? styles.emailStatusSent
+                      : styles.emailStatusSending),
+                }}
+              >
+                {emailMessage}
+              </p>
+            )}
             <p
               style={{
                 fontSize: "12px",
@@ -358,11 +412,14 @@ const RiskProfilingPage = () => {
         open={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
         assessmentKind="risk-profiling"
-        onSubmitSuccess={() => {
+        onSubmitSuccess={(details) => {
+          setLeadDetails(details || null);
           setPhase("quiz");
           setAnswers({});
           setCurrent(0);
           setResult(null);
+          setEmailStatus("idle");
+          setEmailMessage("");
         }}
       />
       </>
@@ -409,10 +466,10 @@ const RiskProfilingPage = () => {
             <button
               type="button"
               key={`${q.id}-${idx}`}
-              onClick={() => handleSelect(opt.score)}
+              onClick={() => handleSelect(opt)}
               style={{
                 ...styles.optionBtn,
-                ...(answers[q.id] === opt.score ? styles.optionSelected : {}),
+                ...(answers[q.id]?.score === opt.score ? styles.optionSelected : {}),
               }}
             >
               <span style={styles.optionLabel}>{opt.label}</span>
@@ -577,6 +634,29 @@ const styles = {
   section: {
     padding: "24px 24px",
     borderTop: "1px solid #f1f5f9",
+  },
+  emailStatus: {
+    margin: "0 0 14px",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    fontSize: "12px",
+    fontWeight: 600,
+    lineHeight: 1.5,
+  },
+  emailStatusSending: {
+    color: "#92400e",
+    background: "#fffbeb",
+    border: "1px solid #fde68a",
+  },
+  emailStatusSent: {
+    color: "#047857",
+    background: "#ecfdf5",
+    border: "1px solid #a7f3d0",
+  },
+  emailStatusFailed: {
+    color: "#b91c1c",
+    background: "#fef2f2",
+    border: "1px solid #fecaca",
   },
   sectionTitle: {
     fontSize: "12px",

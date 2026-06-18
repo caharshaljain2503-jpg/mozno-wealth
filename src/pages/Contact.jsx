@@ -29,6 +29,16 @@ const CONTACT_STAT_COLORS = [
   "from-teal-500 to-emerald-500",
   "from-blue-500 to-cyan-500",
 ];
+const DEFAULT_ADDRESS =
+  "106, Shyamkamal 'C' Building, Agarwal Market, Vile Parle East, Mumbai - 400 057";
+const DEFAULT_MAP_LINK = "https://maps.app.goo.gl/STjHCGiRPECf3hJR6?g_st=ac";
+const LEGACY_DEFAULT_MAP_LINK = "https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47";
+
+const getMapEmbedSrc = (contactInfo) => {
+  if (contactInfo?.mapEmbedUrl) return contactInfo.mapEmbedUrl;
+  const address = contactInfo?.address || DEFAULT_ADDRESS;
+  return `https://www.google.com/maps?q=${encodeURIComponent(address)}&z=17&hl=en&output=embed`;
+};
 
 const Contact = () => {
   const { data: settingsData } = useQuery({
@@ -37,6 +47,12 @@ const Contact = () => {
     staleTime: 30000,
   });
   const siteContent = settingsData?.siteContent || null;
+  const contactInfo = settingsData?.siteSettings?.contactInfo || {};
+  const mapLink =
+    !contactInfo.mapLink || contactInfo.mapLink === LEGACY_DEFAULT_MAP_LINK
+      ? DEFAULT_MAP_LINK
+      : contactInfo.mapLink;
+  const mapEmbedSrc = getMapEmbedSrc(contactInfo);
   const contactStats = (siteContent?.contactStats?.items || []).map((item, index) => ({
     value: item?.value || "",
     label: item?.label || "",
@@ -201,7 +217,7 @@ const Contact = () => {
             <div className="relative h-[250px] xs:h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px]">
               <iframe
                 title="Mozno Wealth Office Location"
-                src="https://www.google.com/maps?q=106%2C+Shyamkamal+%27C%27+Building%2C+Agarwal+Market%2C+Vile+Parle+East%2C+Mumbai+400057&z=17&hl=en&output=embed"
+                src={mapEmbedSrc}
                 className="w-full h-full border-0"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -225,10 +241,10 @@ const Contact = () => {
                       Mozno Wealth
                     </h3>
                     <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 mt-1">
-                      {settingsData?.siteSettings?.contactInfo?.address || "106, Shyamkamal 'C' Building, Agarwal Market, Vile Parle East, Mumbai - 400 057"}
+                      {contactInfo.address || DEFAULT_ADDRESS}
                     </p>
                     <a
-                      href={settingsData?.siteSettings?.contactInfo?.mapLink || "https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47"}
+                      href={mapLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-emerald-600 font-medium text-xs xs:text-sm mt-2 hover:gap-2.5 transition-all"
@@ -313,25 +329,25 @@ const Contact = () => {
                   {
                     icon: MapPin,
                     title: "Visit Our Office",
-                    text: settingsData?.siteSettings?.contactInfo?.address || "106, Shyamkamal 'C' Building, Agarwal Market, Vile Parle East, Mumbai - 400 057",
+                    text: contactInfo.address || DEFAULT_ADDRESS,
                     subtext: "Google Maps",
                     color: "from-emerald-500 to-teal-500",
-                    link: settingsData?.siteSettings?.contactInfo?.mapLink || "https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47",
+                    link: mapLink,
                   },
                   {
                     icon: Mail,
                     title: "Email Us",
-                    text: settingsData?.siteSettings?.contactInfo?.email || "contact@mozno.in",
+                    text: contactInfo.email || "contact@mozno.in",
                     subtext: "Less than 24 hrs response time",
                     color: "from-cyan-500 to-blue-500",
-                    link: `mailto:${settingsData?.siteSettings?.contactInfo?.email || "contact@mozno.in"}`,
+                    link: `mailto:${contactInfo.email || "contact@mozno.in"}`,
                   },
                   {
                     icon: MessageCircle,
                     title: "Chat on WhatsApp",
                     text: "Message us directly",
                     color: "from-teal-500 to-emerald-500",
-                    link: settingsData?.siteSettings?.contactInfo?.whatsapp || "https://wa.me/919820507696",
+                    link: contactInfo.whatsapp || "https://wa.me/919820507696",
                   },
                 ].map((item, index) => (
                   <motion.a

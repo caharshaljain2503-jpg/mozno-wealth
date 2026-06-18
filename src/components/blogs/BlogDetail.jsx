@@ -237,6 +237,7 @@ const BlogDetail = () => {
   const summaryLine = useMemo(() => {
     if (!post) return "";
     if (post.subTitle?.trim()) return post.subTitle.trim();
+    if (post.paragraph?.trim()) return post.paragraph.trim();
     if (!post.description) return "";
     const text = post.description
       .replace(/<[^>]+>/g, " ")
@@ -247,6 +248,7 @@ const BlogDetail = () => {
   }, [post]);
 
   const categoryLabel = (post?.category || "General").trim();
+  const openingParagraph = post?.paragraph?.trim() || "";
 
   /* ────── loading state ────── */
   if (isLoading) {
@@ -398,9 +400,9 @@ const BlogDetail = () => {
       </MotionDiv>
 
       <div className="pt-20 sm:pt-24 pb-16 sm:pb-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Intro: breadcrumbs → title — max-w-3xl; sidebar does not start here */}
-          <header className="max-w-3xl">
+        <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 xl:px-10">
+          {/* Intro: breadcrumbs, title, and metadata */}
+          <header className="max-w-5xl">
             <MotionDiv
               variants={staggerHeader}
               initial="hidden"
@@ -525,8 +527,8 @@ const BlogDetail = () => {
           </header>
 
           {/* Featured image + article align with sidebar (sidebar starts here on desktop) */}
-          <div className="mt-8 flex flex-col gap-10 lg:mt-10 lg:flex-row lg:items-start lg:gap-12 xl:gap-14">
-            <div className="min-w-0 w-full max-w-3xl flex-1">
+          <div className="mt-8 flex flex-col gap-10 lg:mt-10 lg:flex-row lg:items-start lg:gap-10 xl:gap-12">
+            <div className="min-w-0 w-full max-w-5xl flex-1">
               <MotionFigure
                 variants={headerItem}
                 initial="hidden"
@@ -549,7 +551,7 @@ const BlogDetail = () => {
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, margin: "-40px" }}
-                className="mt-10 sm:mt-12 w-full max-w-3xl rounded-2xl border border-stone-200/90 bg-white px-6 py-8 shadow-sm sm:px-9 sm:py-10 md:px-10 md:py-12"
+                className="mt-10 sm:mt-12 w-full rounded-2xl border border-stone-200/90 bg-white px-5 py-7 shadow-sm sm:px-8 sm:py-9 md:px-10 md:py-11 lg:px-12"
               >
                 <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-stone-100 pb-6">
                   <div className="flex items-center gap-2 text-sm text-stone-500">
@@ -645,15 +647,24 @@ const BlogDetail = () => {
                   viewport={{ once: true, margin: "-30px" }}
                   className="mb-12"
                 >
+                  {openingParagraph && (
+                    <p className="mb-8 max-w-none text-base leading-8 text-stone-700 sm:text-lg sm:leading-9">
+                      {openingParagraph}
+                    </p>
+                  )}
+
                   {post.description && (
                     <div
                       className="prose prose-stone max-w-none
                         prose-headings:font-blog-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-stone-900
-                        prose-p:text-[18px] prose-p:leading-[1.8] prose-p:text-stone-700
+                        prose-p:text-base prose-p:leading-8 prose-p:text-stone-700 sm:prose-p:text-lg sm:prose-p:leading-9
                         prose-a:font-medium prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline
                         prose-strong:font-semibold prose-strong:text-stone-900
                         prose-li:text-stone-700 prose-li:leading-[1.8]
                         prose-img:rounded-xl prose-img:shadow-md
+                        prose-table:w-full prose-table:border-collapse prose-table:text-sm
+                        prose-th:border prose-th:border-stone-300 prose-th:bg-stone-100 prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:font-semibold prose-th:text-stone-900
+                        prose-td:border prose-td:border-stone-300 prose-td:px-4 prose-td:py-3 prose-td:align-top
                         prose-h2:text-[1.65rem] prose-h2:mt-10 prose-h2:mb-4
                         prose-h3:text-[1.35rem] prose-h3:mt-8 prose-h3:mb-3
                         prose-blockquote:border-l-emerald-600 prose-blockquote:bg-emerald-50/40 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:not-italic"
@@ -730,11 +741,11 @@ const BlogDetail = () => {
                 </MotionDiv>
               </MotionSection>
 
-              <div className="mt-12 w-full max-w-3xl lg:hidden">
+              <div className="mt-12 w-full max-w-5xl lg:hidden">
                 <RecentPosts currentPostId={post._id} />
               </div>
 
-              <div className="mt-12 w-full max-w-3xl">
+              <div className="mt-12 w-full max-w-5xl">
                 {post && <CommentSection postId={post._id} />}
               </div>
             </div>

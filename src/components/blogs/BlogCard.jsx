@@ -44,12 +44,30 @@ const formatDate = (dateValue) => {
   }
 };
 
+const toPlainText = (value = "") =>
+  String(value)
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const truncateText = (value, maxLength = 150) => {
+  const text = toPlainText(value);
+  if (!text) return "";
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}...` : text;
+};
+
 const BlogCard = ({ post, index }) => {
   // ─── Normalize fields (API vs static data) ──────────
   const id = post._id || post.id;
   const slug = post.slug || id;
   const title = post.title || "Untitled";
-  const excerpt = post.excerpt || post.description || "";
+  const excerpt = truncateText(
+    post.subTitle || post.excerpt || post.paragraph || post.description,
+  );
   const category = post.category || "General";
   const image = post.image || post.coverImage || post.thumbnail || "";
   const readTime = post.readTime || "5 min read";
@@ -67,7 +85,9 @@ const BlogCard = ({ post, index }) => {
   // Author can be string or object from API
   const authorName =
     typeof post.author === "object"
-      ? post.author?.name || "Mozno Team"
+      ? [post.author?.firstName, post.author?.lastName].filter(Boolean).join(" ") ||
+        post.author?.name ||
+        "Mozno Team"
       : post.author || "Mozno Team";
 
   return (
@@ -154,14 +174,10 @@ const BlogCard = ({ post, index }) => {
 
         
         <p className="text-gray-600 mb-3 xs:mb-4 text-xs xs:text-sm sm:text-base line-clamp-2 sm:line-clamp-3">
-          <span
-            className="text-[10px] min-[375px]:text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-2 lg:line-clamp-3 leading-relaxed"
-            dangerouslySetInnerHTML={{
-              __html:
-                excerpt + "..." ||
-                "Explore this insightful article about digital trends and strategies.",
-            }}
-          />
+          <span className="text-[10px] min-[375px]:text-xs sm:text-sm md:text-base line-clamp-2 sm:line-clamp-2 lg:line-clamp-3 leading-relaxed">
+            {excerpt ||
+              "Explore this insightful article about financial planning and wealth management."}
+          </span>
         </p>
 
         {/* Tags */}

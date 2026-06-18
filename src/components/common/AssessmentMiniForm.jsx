@@ -94,7 +94,11 @@ export default function AssessmentMiniForm({ assessmentKind, onSubmitSuccess }) 
           sig: challenge.sig,
         },
       });
-      onSubmitSuccess?.();
+      onSubmitSuccess?.({
+        fullName: nameT,
+        email: emailT.toLowerCase(),
+        phone: phoneT,
+      });
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
