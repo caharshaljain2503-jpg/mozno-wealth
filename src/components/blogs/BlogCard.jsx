@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
-  Clock,
   User,
   ArrowRight,
   Eye,
@@ -12,6 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format, isValid, parseISO } from "date-fns";
+import { useToggleBlogLike } from "../../hooks/useBlog";
 
 const MotionArticle = motion.article;
 
@@ -70,12 +70,30 @@ const BlogCard = ({ post, index }) => {
   );
   const category = post.category || "General";
   const image = post.image || post.coverImage || post.thumbnail || "";
-  const readTime = post.readTime || "5 min read";
-  const views = post.views || 0;
-  const likes = post.likes || 0;
-  const comments = post.comments || 0;
+  const views = Number(post.views || 0);
+  const comments = Number(post.comments || post.commentCount || 0);
+  const [likeCount, setLikeCount] = useState(Number(post.likes || 0));
+  const [liked, setLiked] = useState(false);
+  const { mutate: toggleLike, isPending: isLikePending } = useToggleBlogLike();
   const tags = post.tags || [];
   const featured = post.featured || false;
+
+  useEffect(() => {
+    setLikeCount(Number(post.likes || 0));
+    setLiked(localStorage.getItem(`mozno-blog-liked-${id}`) === "true");
+  }, [id, post.likes]);
+
+  const handleLike = () => {
+    if (!id || isLikePending) return;
+    toggleLike(id, {
+      onSuccess: (result) => {
+        const nextLiked = Boolean(result.liked);
+        setLiked(nextLiked);
+        setLikeCount(Number(result.likes || 0));
+        localStorage.setItem(`mozno-blog-liked-${id}`, String(nextLiked));
+      },
+    });
+  };
 
   // ✅ Safe date — tries all possible field names
   const displayDate = formatDate(
@@ -84,11 +102,12 @@ const BlogCard = ({ post, index }) => {
 
   // Author can be string or object from API
   const authorName =
-    typeof post.author === "object"
+    post.bylineName?.trim() ||
+    (typeof post.author === "object"
       ? [post.author?.firstName, post.author?.lastName].filter(Boolean).join(" ") ||
         post.author?.name ||
         "Mozno Team"
-      : post.author || "Mozno Team";
+      : post.author || "Mozno Team");
 
   return (
     <MotionArticle
@@ -131,13 +150,6 @@ const BlogCard = ({ post, index }) => {
             </div>
           )}
 
-          {/* Read Time Badge - Mobile */}
-          <div className="absolute bottom-2 xs:bottom-3 right-2 xs:right-3 sm:hidden">
-            <span className="px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[10px] rounded-full flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {readTime}
-            </span>
-          </div>
         </div>
       )}
 
@@ -149,10 +161,6 @@ const BlogCard = ({ post, index }) => {
             <Calendar className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
             {/* ✅ FIXED: Safe date formatting */}
             <span>{displayDate}</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>{readTime}</span>
           </div>
           <div className="flex items-center gap-1">
             <User className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
@@ -203,20 +211,32 @@ const BlogCard = ({ post, index }) => {
         <div className="flex items-center justify-between pt-3 xs:pt-4 border-t border-gray-100">
           {/* Stats */}
           <div className="flex items-center gap-2 xs:gap-3 sm:gap-4 text-[10px] xs:text-xs sm:text-sm text-gray-500">
-            <div className="flex items-center gap-0.5 xs:gap-1">
+            <div className="flex items-center gap-0.5 xs:gap-1" title={`${views} views`}>
               <Eye className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
               <span>
                 {views >= 1000 ? `${(views / 1000).toFixed(1)}k` : views}
               </span>
             </div>
-            <div className="flex items-center gap-0.5 xs:gap-1">
-              <Heart className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
-              <span>{likes}</span>
-            </div>
-            <div className="flex items-center gap-0.5 xs:gap-1">
+            <button
+              type="button"
+              onClick={handleLike}
+              disabled={isLikePending}
+              className={`flex items-center gap-0.5 rounded-md px-1 py-0.5 transition-colors xs:gap-1 ${
+                liked ? "text-red-500" : "hover:bg-red-50 hover:text-red-500"
+              }`}
+              aria-label={liked ? "Unlike article" : "Like article"}
+            >
+              <Heart className={`w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 ${liked ? "fill-current" : ""}`} />
+              <span>{likeCount}</span>
+            </button>
+            <Link
+              to={`/blogs/${slug}#comments`}
+              className="flex items-center gap-0.5 rounded-md px-1 py-0.5 hover:bg-emerald-50 hover:text-emerald-600 xs:gap-1"
+              title={`${comments} comments`}
+            >
               <MessageCircle className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
               <span>{comments}</span>
-            </div>
+            </Link>
           </div>
 
           {/* Actions */}

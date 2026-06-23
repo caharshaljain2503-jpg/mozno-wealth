@@ -30,13 +30,23 @@ const CONTACT_STAT_COLORS = [
   "from-blue-500 to-cyan-500",
 ];
 const DEFAULT_ADDRESS =
+  "C, 106, Shyam Kamal Rd, next to Rajwadi Chai, above IIFL Office, Agarwal Market, Vile Parle East, Vile Parle, Mumbai, Maharashtra 400057";
+const LEGACY_DEFAULT_ADDRESS =
   "106, Shyamkamal 'C' Building, Agarwal Market, Vile Parle East, Mumbai - 400 057";
-const DEFAULT_MAP_LINK = "https://maps.app.goo.gl/STjHCGiRPECf3hJR6?g_st=ac";
-const LEGACY_DEFAULT_MAP_LINK = "https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47";
+const DEFAULT_MAP_LINK = "https://share.google/VNKicOtItWUL4lP5P";
+const DEFAULT_YOUTUBE_LINK = "https://www.youtube.com/@theawarenessinitiative";
+const LEGACY_YOUTUBE_LINK = "https://www.youtube.com/@awareness_initiative";
+const LEGACY_DEFAULT_MAP_LINKS = [
+  "https://maps.app.goo.gl/STjHCGiRPECf3hJR6?g_st=ac",
+  "https://maps.app.goo.gl/VQSp7vAJ3kTvGcW47",
+];
 
 const getMapEmbedSrc = (contactInfo) => {
   if (contactInfo?.mapEmbedUrl) return contactInfo.mapEmbedUrl;
-  const address = contactInfo?.address || DEFAULT_ADDRESS;
+  const address =
+    !contactInfo?.address || contactInfo.address === LEGACY_DEFAULT_ADDRESS
+      ? DEFAULT_ADDRESS
+      : contactInfo.address;
   return `https://www.google.com/maps?q=${encodeURIComponent(address)}&z=17&hl=en&output=embed`;
 };
 
@@ -48,10 +58,19 @@ const Contact = () => {
   });
   const siteContent = settingsData?.siteContent || null;
   const contactInfo = settingsData?.siteSettings?.contactInfo || {};
+  const address =
+    !contactInfo.address || contactInfo.address === LEGACY_DEFAULT_ADDRESS
+      ? DEFAULT_ADDRESS
+      : contactInfo.address;
   const mapLink =
-    !contactInfo.mapLink || contactInfo.mapLink === LEGACY_DEFAULT_MAP_LINK
+    !contactInfo.mapLink || LEGACY_DEFAULT_MAP_LINKS.includes(contactInfo.mapLink)
       ? DEFAULT_MAP_LINK
       : contactInfo.mapLink;
+  const youtubeLink =
+    !settingsData?.siteSettings?.socialLinks?.youtube ||
+    settingsData.siteSettings.socialLinks.youtube === LEGACY_YOUTUBE_LINK
+      ? DEFAULT_YOUTUBE_LINK
+      : settingsData.siteSettings.socialLinks.youtube;
   const mapEmbedSrc = getMapEmbedSrc(contactInfo);
   const contactStats = (siteContent?.contactStats?.items || []).map((item, index) => ({
     value: item?.value || "",
@@ -241,7 +260,7 @@ const Contact = () => {
                       Mozno Wealth
                     </h3>
                     <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 mt-1">
-                      {contactInfo.address || DEFAULT_ADDRESS}
+                      {address}
                     </p>
                     <a
                       href={mapLink}
@@ -329,7 +348,7 @@ const Contact = () => {
                   {
                     icon: MapPin,
                     title: "Visit Our Office",
-                    text: contactInfo.address || DEFAULT_ADDRESS,
+                    text: address,
                     subtext: "Google Maps",
                     color: "from-emerald-500 to-teal-500",
                     link: mapLink,
@@ -411,7 +430,7 @@ const Contact = () => {
                     },
                     {
                       icon: Youtube,
-                      href: settingsData?.siteSettings?.socialLinks?.youtube || "https://www.youtube.com/@awareness_initiative",
+                      href: youtubeLink,
                       label: "YouTube",
                       color: "hover:bg-red-600",
                     },

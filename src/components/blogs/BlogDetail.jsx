@@ -37,7 +37,7 @@ import {
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import RecentPosts from "../blogs/RecentPosts";
-import { useBlog } from "../../hooks/useBlog";
+import { useBlog, useRecordBlogView, useToggleBlogLike } from "../../hooks/useBlog";
 
 const MotionDiv = motion.div;
 const MotionNav = motion.nav;
@@ -126,11 +126,16 @@ const BlogDetail = () => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [viewCount, setViewCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
 
   const containerRef = useRef(null);
 
   const { data: response, isLoading, isError, error, refetch } = useBlog(slug);
   const post = response;
+  const { mutate: recordView } = useRecordBlogView();
+  const { mutate: toggleLike, isPending: isLikePending } = useToggleBlogLike();
 
   const coverSrc = useMemo(() => {
     if (!post) return "";
@@ -168,8 +173,47 @@ const BlogDetail = () => {
     }
   }, [isLoading, isError, post, navigate]);
 
+  useEffect(() => {
+    if (!post?._id) return;
+
+    setViewCount(Number(post.views || 0));
+    setLikeCount(Number(post.likes || 0));
+    setCommentCount(Number(post.comments || 0));
+
+    const likedKey = `mozno-blog-liked-${post._id}`;
+    setLiked(localStorage.getItem(likedKey) === "true");
+
+    const viewedKey = `mozno-blog-viewed-${post._id}`;
+    if (sessionStorage.getItem(viewedKey)) return;
+
+    sessionStorage.setItem(viewedKey, "true");
+    recordView(post._id, {
+      onSuccess: (result) => setViewCount(Number(result.views || 0)),
+    });
+  }, [post?._id]);
+
+  useEffect(() => {
+    if (window.location.hash !== "#comments" || !post?._id) return;
+    window.setTimeout(() => {
+      document.getElementById("comments")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 150);
+  }, [post?._id]);
+
   /* ────── memoized handlers ────── */
-  const handleLike = useCallback(() => setLiked((p) => !p), []);
+  const handleLike = useCallback(() => {
+    if (!post?._id || isLikePending) return;
+    toggleLike(post._id, {
+      onSuccess: (result) => {
+        const nextLiked = Boolean(result.liked);
+        setLiked(nextLiked);
+        setLikeCount(Number(result.likes || 0));
+        localStorage.setItem(`mozno-blog-liked-${post._id}`, String(nextLiked));
+      },
+    });
+  }, [post?._id, isLikePending, toggleLike]);
   const handleSave = useCallback(() => setSaved((p) => !p), []);
 
   const handleCopyLink = useCallback(() => {
@@ -249,6 +293,17 @@ const BlogDetail = () => {
 
   const categoryLabel = (post?.category || "General").trim();
   const openingParagraph = post?.paragraph?.trim() || "";
+  const authorName =
+    post?.bylineName?.trim() ||
+    (typeof post?.author === "object"
+      ? [post.author?.firstName, post.author?.lastName].filter(Boolean).join(" ") ||
+        post.author?.name ||
+        "Mozno Team"
+      : post?.author || "Mozno Team");
+  const authorRole =
+    post?.bylineRole?.trim() ||
+    (typeof post?.author === "object" ? post.author?.role : "") ||
+    "Contributor";
 
   /* ────── loading state ────── */
   if (isLoading) {
@@ -456,26 +511,23 @@ const BlogDetail = () => {
                   <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                     <img
                       src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        "Mozno Wealth"
+                        authorName
                       )}&background=047857&color=fff&size=96`}
                       alt=""
                       className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-stone-100 shadow-md sm:h-14 sm:w-14"
                       loading="lazy"
                     />
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-stone-900 sm:text-lg">Mozno Wealth</p>
+                      <p className="truncate font-semibold text-stone-900 sm:text-lg">{authorName}</p>
+                      <p className="truncate text-xs text-stone-500">{authorRole}</p>
                       <p className="mt-0.5 text-xs text-stone-500 sm:text-sm">
-                        <span className="font-medium text-stone-700">By Mozno Wealth</span>
+                        <span className="font-medium text-stone-700">By {authorName}</span>
                         <span className="text-stone-300 mx-1.5" aria-hidden>
                           ·
                         </span>
                         <time dateTime={post.createdAt ? new Date(post.createdAt).toISOString() : undefined}>
                           {formattedDate}
                         </time>
-                        <span className="text-stone-300 mx-1.5" aria-hidden>
-                          ·
-                        </span>
-                        <span>5 min read</span>
                       </p>
                     </div>
                   </div>
@@ -569,16 +621,16 @@ const BlogDetail = () => {
                           liked ? "fill-current" : ""
                         }`}
                       />
-                      <span className="text-xs font-medium">{liked ? 1 : "Like"}</span>
+                      <span className="text-xs font-medium">{likeCount || "Like"}</span>
                     </MotionButton>
                     <div className="hidden h-4 w-px bg-stone-200 sm:block" />
                     <div className="flex items-center gap-1.5 px-1">
                       <Eye className="h-4 w-4" />
-                      <span className="text-xs">0</span>
+                      <span className="text-xs">{viewCount}</span>
                     </div>
                     <div className="flex items-center gap-1.5 px-1">
                       <MessageCircle className="h-4 w-4" />
-                      <span className="text-xs">0</span>
+                      <span className="text-xs">{commentCount}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -745,8 +797,13 @@ const BlogDetail = () => {
                 <RecentPosts currentPostId={post._id} />
               </div>
 
-              <div className="mt-12 w-full max-w-5xl">
-                {post && <CommentSection postId={post._id} />}
+              <div id="comments" className="mt-12 w-full max-w-5xl scroll-mt-28">
+                {post && (
+                  <CommentSection
+                    postId={post._id}
+                    onCountChange={setCommentCount}
+                  />
+                )}
               </div>
             </div>
 

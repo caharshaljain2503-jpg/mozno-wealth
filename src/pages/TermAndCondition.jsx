@@ -374,8 +374,9 @@ export default function TermsAndConditions() {
                   <p className="text-sm font-medium text-gray-900">Address</p>
                   <p className="text-sm text-gray-600">
                     Mozno Advisory<br />
-                    106, Shyamkamal 'C' Building, Agarwal Market,<br />
-                    Vile Parle East, Mumbai - 400 057
+                    C, 106, Shyam Kamal Rd, next to Rajwadi Chai,<br />
+                    above IIFL Office, Agarwal Market, Vile Parle East,<br />
+                    Vile Parle, Mumbai, Maharashtra 400057
                   </p>
                 </div>
               </div>

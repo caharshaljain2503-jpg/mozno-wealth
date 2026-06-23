@@ -33,13 +33,15 @@ const HeroSection = () => {
   return (
     <section
       className="relative bg-white overflow-hidden min-h-screen flex items-center"
-      style={{
-        backgroundImage: `url(${heroImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
     >
+      <img
+        src={heroImage}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+        loading="eager"
+        fetchPriority="high"
+      />
       <div className="relative w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <Motion.div initial="hidden" animate="visible" className="w-full">
 

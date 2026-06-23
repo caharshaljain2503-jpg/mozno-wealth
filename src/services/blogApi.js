@@ -1,5 +1,17 @@
 import apiClient from "../api/axios.instance";
 
+const getBlogVisitorId = () => {
+  const storageKey = "mozno-blog-visitor-id";
+  let visitorId = localStorage.getItem(storageKey);
+  if (!visitorId) {
+    visitorId =
+      globalThis.crypto?.randomUUID?.() ||
+      `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(storageKey, visitorId);
+  }
+  return visitorId;
+};
+
 // ==================== BLOG API SERVICES ====================
 
 export const blogApi = {
@@ -30,6 +42,18 @@ export const blogApi = {
   addComment: async (data) => {
     const response = await apiClient.post("/blogs/add-comment", data);
     return response.data;
+  },
+
+  recordView: async (blogId) => {
+    if (!blogId) throw new Error("Blog ID is required");
+    return apiClient.post(`/blogs/${blogId}/view`);
+  },
+
+  toggleLike: async (blogId) => {
+    if (!blogId) throw new Error("Blog ID is required");
+    return apiClient.post(`/blogs/${blogId}/like`, {
+      visitorId: getBlogVisitorId(),
+    });
   },
 };
 

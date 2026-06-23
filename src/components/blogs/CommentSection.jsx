@@ -1,5 +1,5 @@
 // components/blogs/CommentSection.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
@@ -272,7 +272,7 @@ const CommentInput = ({ onSubmit, isSubmitting, replyTo, onCancelReply }) => {
 };
 
 // ─── Main CommentSection ─────────────────────────────
-const CommentSection = ({ postId }) => {
+const CommentSection = ({ postId, onCountChange }) => {
   const [replyTo, setReplyTo] = useState(null);
 
   // Fetch comments
@@ -283,6 +283,10 @@ const CommentSection = ({ postId }) => {
 
   // Extract comments from response
   const comments = data?.comments || [];
+
+  useEffect(() => {
+    onCountChange?.(comments.length);
+  }, [comments.length, onCountChange]);
 
   const handleReply = (commentId, authorName) => {
     setReplyTo({ id: commentId, name: authorName });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Clock, Calendar, Loader2 } from 'lucide-react';
+import { ArrowRight, Calendar, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useBlogs } from '../../hooks/useBlog';
@@ -259,10 +259,6 @@ const RecentPosts = ({ currentPostId, variant = "default" }) => {
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
                     <span>{formatDate(post.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>5 min read</span>
                   </div>
                 </div>
                 <h3 className="font-semibold text-gray-900 text-sm xs:text-base sm:text-base line-clamp-2 group-hover:text-emerald-600 transition-colors mb-1.5 xs:mb-2">

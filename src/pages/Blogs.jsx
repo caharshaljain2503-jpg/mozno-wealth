@@ -27,6 +27,7 @@ const Blogs = () => {
   const [selectedTag, setSelectedTag] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [visibleArticleCount, setVisibleArticleCount] = useState(6);
 
   const heroRef = useRef(null);
 
@@ -81,6 +82,12 @@ const Blogs = () => {
     const matchesTag = !selectedTag || post.tags?.includes(selectedTag);
     return matchesCategory && matchesSearch && matchesTag;
   });
+  const visiblePosts = filteredPosts.slice(0, visibleArticleCount);
+  const hasMorePosts = visibleArticleCount < filteredPosts.length;
+
+  useEffect(() => {
+    setVisibleArticleCount(6);
+  }, [selectedCategory, selectedTag, debouncedSearch]);
 
   const featuredPosts = blogs.filter((post) => post.featured);
 
@@ -488,8 +495,6 @@ const Blogs = () => {
                                 {post.title}
                               </h4>
                               <p className="text-[9px] text-white/70 mt-1.5 flex items-center gap-1.5">
-                                <span>{post.readTime || "5 min read"}</span>
-                                <span>•</span>
                                 <span>{post.views || 0} views</span>
                               </p>
                             </motion.a>
@@ -527,9 +532,10 @@ const Blogs = () => {
                         <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">
                           Showing{" "}
                           <span className="font-semibold text-emerald-600">
-                            {filteredPosts.length}
+                            {visiblePosts.length}
                           </span>{" "}
-                          article{filteredPosts.length !== 1 ? "s" : ""}
+                          of {filteredPosts.length} article
+                          {filteredPosts.length !== 1 ? "s" : ""}
                         </p>
                       )}
                     </div>
@@ -629,7 +635,7 @@ const Blogs = () => {
                 {/* Blog Cards Grid */}
                 {!isLoading && !isError && filteredPosts.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                    {filteredPosts.map((post, index) => (
+                    {visiblePosts.map((post, index) => (
                       <motion.div
                         key={post._id || post.id}
                         initial={{ opacity: 0, y: 30 }}
@@ -641,6 +647,26 @@ const Blogs = () => {
                       </motion.div>
                     ))}
                   </div>
+                )}
+
+                {!isLoading && !isError && hasMorePosts && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 flex flex-col items-center"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setVisibleArticleCount((count) => count + 6)}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/25"
+                    >
+                      Show More Articles
+                      <span aria-hidden="true">↓</span>
+                    </button>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Showing {visiblePosts.length} of {filteredPosts.length} articles
+                    </p>
+                  </motion.div>
                 )}
 
                 {/* No Results State */}

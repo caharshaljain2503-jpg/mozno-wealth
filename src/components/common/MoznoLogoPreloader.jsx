@@ -19,8 +19,10 @@ const MoznoLogoPreloader = ({ active = true }) => {
         <img
           src={moznoLogo}
           alt=""
+          data-page-preloader-image
           className="h-24 w-auto max-w-[min(280px,80vw)] object-contain animate-pulse motion-reduce:animate-none drop-shadow-[0_12px_32px_rgba(16,185,129,0.18)]"
-          decoding="async"
+          decoding="sync"
+          loading="eager"
         />
         <div className="flex gap-1.5">
           {[0, 1, 2].map((i) => (

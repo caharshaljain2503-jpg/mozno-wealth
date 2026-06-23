@@ -98,7 +98,7 @@
 
 // 📧 Email: ceo@mozno.in
 
-// 📍 Address: 106, Shyamkamal 'C' Building, Agarwal Market, Vile Parle East, Mumbai - 400057
+// 📍 Address: C, 106, Shyam Kamal Rd, next to Rajwadi Chai, above IIFL Office, Agarwal Market, Vile Parle East, Vile Parle, Mumbai, Maharashtra 400057
 
 // 📅 Free Consultation: 30 minutes with our team
 // ⚡ Response Time: Within 2 hours`,

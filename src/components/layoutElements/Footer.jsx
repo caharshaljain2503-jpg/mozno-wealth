@@ -120,7 +120,7 @@ const Footer = () => {
               </a>
               
               <a 
-                href="https://maps.app.goo.gl/STjHCGiRPECf3hJR6?g_st=ac" 
+                href="https://share.google/VNKicOtItWUL4lP5P" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 sm:gap-3 text-gray-300 hover:text-amber-400 transition-colors duration-300 group"
@@ -131,9 +131,10 @@ const Footer = () => {
                 <div className="min-w-0">
                   <p className="font-medium text-xs sm:text-sm md:text-base">Mumbai Office</p>
                   <p className="text-[10px] xs:text-xs sm:text-sm text-gray-400 leading-relaxed whitespace-pre-line">
-                    {`106, Shyamkamal 'C' Building,
-Agarwal Market, Vile Parle East,
-Mumbai - 400 057`}
+                    {`C, 106, Shyam Kamal Rd, next to Rajwadi Chai,
+above IIFL Office, Agarwal Market,
+Vile Parle East, Vile Parle, Mumbai,
+Maharashtra 400057`}
                   </p>
                 </div>
               </a>
@@ -160,7 +161,7 @@ Mumbai - 400 057`}
                   },
                   { 
                     icon: <Youtube className="w-4 h-4 sm:w-5 sm:h-5" />, 
-                    href: "https://www.youtube.com/@awareness_initiative", 
+                    href: "https://www.youtube.com/@theawarenessinitiative", 
                     label: "YouTube",
                     hoverBg: "hover:bg-red-900"
                   },

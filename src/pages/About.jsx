@@ -648,7 +648,7 @@ const About = () => {
                       },
                       {
                         icon: Youtube,
-                        href: "https://www.youtube.com/@awareness_initiative",
+                        href: "https://www.youtube.com/@theawarenessinitiative",
                       },
                     ].map((social, index) => (
                       <Motion.a
